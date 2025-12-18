@@ -48,16 +48,24 @@ class OrchestratorNode(Node):
 
         self.get_logger().info('Goal accepted!')
 
+        self._goal_handle = goal_handle
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback)
+
+        # Timer to cancel the goal after 3 seconds
+        self._cancel_timer = self.create_timer(3.0, self.timer_callback)
+
+    def timer_callback(self):
+        self.get_logger().info('Canceling mission after 3 seconds...')
+        self._goal_handle.cancel_goal_async()
+        self._cancel_timer.cancel()
 
     def get_result_callback(self, future):
         result = future.result().result
         self.get_logger().info(f'Result: Success={result.success}, Status={result.final_status}')
-        # In a real orchestrator, we might trigger the next step here
-        # For this node, we can shutdown after the result if it was a oneshot script, 
-        # but as a node it should probably stay alive. 
-        # I will leave rclpy.shutdown() to the main loop or user intervention.
+        
+        # Shutdown after result (optional, but good for testing)
+        # rclpy.shutdown()
 
 def main(args=None):
     rclpy.init(args=args)
