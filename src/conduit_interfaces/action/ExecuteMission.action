@@ -1,0 +1,12 @@
+# Goal: The Web App (Chalice) sends this
+string mission_id
+string robot_id
+float32[] target_coordinates
+---
+# Result: The Robot reports this when done
+bool success
+string final_status
+---
+# Feedback: The Robot streams this while working
+float32 progress_percentage
+string current_state  # e.g., "MOVING", "LIFTING"
