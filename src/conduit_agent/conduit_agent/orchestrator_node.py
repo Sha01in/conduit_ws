@@ -4,43 +4,76 @@ from rclpy.node import Node
 
 from conduit_interfaces.action import ExecuteMission
 
+
 class OrchestratorNode(Node):
+    """
+    Orchestrates robot missions using ROS 2 Action Clients.
+
+    This node acts as a central controller (simulating FactoryOS) that sends
+    asynchronous goals to the factory robot and monitors their progress via
+    feedback. It demonstrates robust cancellation logic to simulate operator
+    intervention.
+    """
 
     def __init__(self):
+        """Initialize the OrchestratorNode with an action client."""
         super().__init__('orchestrator')
         self._action_client = ActionClient(self, ExecuteMission, 'execute_mission')
+        self._goal_handle = None
+        self._cancel_timer = None
 
     def send_mission(self, mission_id, target_coordinates):
+        """
+        Send a mission goal to the robot asynchronously.
+
+        This method constructs the goal message and sends it to the action server.
+        It attaches callbacks for feedback and the final result, ensuring the
+        main thread remains unblocked for other orchestration tasks.
+
+        Args:
+            mission_id (str): Unique identifier for the mission.
+            target_coordinates (list[float]): [x, y, theta] target.
+        """
         goal_msg = ExecuteMission.Goal()
         goal_msg.mission_id = mission_id
-        # goal_msg.robot_id = robot_id # Assuming robot_id might be needed but prompt only asked for id and coords in method signature. 
-        # Using placeholder or omitting optional fields if they were in the action.
-        # Checking action definition from memory: 
-        # string mission_id
-        # string robot_id
-        # float32[] target_coordinates
-        
-        # I'll add a default robot_id since the method signature requested only id and coords.
-        goal_msg.robot_id = 'default_robot' 
+        # In a real scenario, this would be dynamic or passed in.
+        goal_msg.robot_id = 'default_robot'
         goal_msg.target_coordinates = target_coordinates
 
-        self.get_logger().info(f'Waiting for action server to be available...')
+        self.get_logger().info('Waiting for action server to be available...')
         self._action_client.wait_for_server()
 
         self.get_logger().info(f'Sending mission {mission_id} to {target_coordinates}...')
-        
+
         self._send_goal_future = self._action_client.send_goal_async(
-            goal_msg, 
+            goal_msg,
             feedback_callback=self.feedback_callback)
 
         self._send_goal_future.add_done_callback(self.goal_response_callback)
 
     def feedback_callback(self, feedback_msg):
+        """
+        Process partial feedback from the action server.
+
+        Args:
+            feedback_msg: Container with the feedback content.
+        """
         feedback = feedback_msg.feedback
         self.get_logger().info(
-            f'Received feedback: Status: {feedback.current_state}, Progress: {feedback.progress_percentage}%')
+            f'Received feedback: Status: {feedback.current_state}, '
+            f'Progress: {feedback.progress_percentage}%')
 
     def goal_response_callback(self, future):
+        """
+        Handle the server's response to the goal request.
+
+        If accepted, it sets up a timer to simulate a "Stop" command after
+        3 seconds, demonstrating the system's ability to handle user
+        cancellation mid-flight.
+
+        Args:
+            future: Future containing the goal handle.
+        """
         goal_handle = future.result()
         if not goal_handle.accepted:
             self.get_logger().info('Goal rejected :(')
@@ -56,16 +89,24 @@ class OrchestratorNode(Node):
         self._cancel_timer = self.create_timer(3.0, self.timer_callback)
 
     def timer_callback(self):
+        """Trigger cancellation of the current goal."""
         self.get_logger().info('Canceling mission after 3 seconds...')
-        self._goal_handle.cancel_goal_async()
-        self._cancel_timer.cancel()
+        if self._goal_handle:
+            self._goal_handle.cancel_goal_async()
+        if self._cancel_timer:
+            self._cancel_timer.cancel()
 
     def get_result_callback(self, future):
+        """
+        Handle the final result of the action.
+
+        Args:
+            future: Future containing the wrapped result.
+        """
         result = future.result().result
-        self.get_logger().info(f'Result: Success={result.success}, Status={result.final_status}')
-        
-        # Shutdown after result (optional, but good for testing)
-        # rclpy.shutdown()
+        self.get_logger().info(f'Result: Success={result.success}, '
+                               f'Status={result.final_status}')
+
 
 def main(args=None):
     rclpy.init(args=args)
@@ -73,13 +114,13 @@ def main(args=None):
     orchestrator = OrchestratorNode()
 
     # Example usage: sending a mission
-    # In a real scenario this might be triggered by an external event or service call.
     orchestrator.send_mission("MISSION_001", [10.0, 20.0, 0.0])
 
     rclpy.spin(orchestrator)
 
     orchestrator.destroy_node()
     rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()

@@ -6,7 +6,7 @@ package_name = 'conduit_agent'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='0.1.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -16,9 +16,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='user',
-    maintainer_email='user@todo.todo',
-    description='ROS 2 Agent package for conduit_ws',
+    maintainer='Engineer',
+    maintainer_email='me@example.com',
+    description='Prototype Universal Driver for FactoryOS Orchestration',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={

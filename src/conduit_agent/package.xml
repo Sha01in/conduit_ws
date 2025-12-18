@@ -2,9 +2,9 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>conduit_agent</name>
-  <version>0.0.0</version>
-  <description>ROS 2 Agent package for conduit_ws</description>
-  <maintainer email="user@todo.todo">user</maintainer>
+  <version>0.1.0</version>
+  <description>Prototype Universal Driver for FactoryOS Orchestration</description>
+  <maintainer email="me@example.com">Engineer</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
