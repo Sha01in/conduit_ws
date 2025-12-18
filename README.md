@@ -30,6 +30,7 @@ To eliminate dependency hell and match Conduit's on-prem deployment model:
 * **Docker-Native:** The entire stack runs in an isolated container based on `ros:jazzy`.
 * **Reproducibility:** No host-side ROS installation required.
 * **Microservices:** Nodes run as isolated processes (verified via PID checks), launched via a single entry point (`factory.launch.py`).
+* **Startup Sequence:** Implemented `TimerAction` logic to enforce deterministic startup: the Action Server (`factory_robot`) initializes fully before the Orchestrator Client attempts connection.
 
 ### 3. Quick Start (Docker)
 
